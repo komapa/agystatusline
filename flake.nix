@@ -54,7 +54,7 @@
 
             nativeCheckInputs = [ pkgs.gitMinimal ];
 
-            vendorHash = "sha256-SvO4hhtbnZ1ySvBG5qEtTunzQne1WNnzCaQCLpal2k8=";
+            vendorHash = "sha256-OE2mVO5JM2cxeROGJqctP9p7Fi3u5+P5o9tKrxddxig=";
           };
 
           apps.default = {
