@@ -275,6 +275,275 @@ func TestParseShortStat(t *testing.T) {
 	}
 }
 
+func TestGitAheadBehindWidget(t *testing.T) {
+	RegisterAll()
+	w := GetWidget("git-ahead-behind")
+	if w == nil {
+		t.Fatalf("Git ahead-behind widget not found")
+	}
+
+	if w.GetDefaultColor() != "brightCyan" {
+		t.Errorf("Expected default color %q, got %q", "brightCyan", w.GetDefaultColor())
+	}
+	if w.GetDisplayName() != "Git Ahead/Behind" {
+		t.Errorf("Expected display name %q, got %q", "Git Ahead/Behind", w.GetDisplayName())
+	}
+
+	settings := types.DefaultSettings()
+
+	tests := []struct {
+		name          string
+		gitRunner     func(cmd string, ctx CwdResolver, ttl int) (string, error)
+		item          types.WidgetItem
+		ctx           types.RenderContext
+		expectedTitle string
+		expectedBody  string
+		expectedColor string
+	}{
+		{
+			name:          "Preview mode ahead-behind",
+			item:          types.WidgetItem{Type: "git-ahead-behind"},
+			ctx:           types.RenderContext{IsPreview: true},
+			expectedTitle: "",
+			expectedBody:  "↑2 ↓1",
+			expectedColor: "brightCyan",
+		},
+		{
+			name: "Both ahead and behind",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-list --left-right --count HEAD...@{upstream}" {
+					return "2\t1\n", nil
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-ahead-behind"},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/dummy/repo"}},
+			expectedTitle: "",
+			expectedBody:  "↑2 ↓1",
+			expectedColor: "brightCyan",
+		},
+		{
+			name: "Ahead only",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-list --left-right --count HEAD...@{upstream}" {
+					return "3\t0\n", nil
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-ahead-behind"},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/dummy/repo"}},
+			expectedTitle: "",
+			expectedBody:  "↑3",
+			expectedColor: "brightCyan",
+		},
+		{
+			name: "Behind only",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-list --left-right --count HEAD...@{upstream}" {
+					return "0\t5\n", nil
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-ahead-behind"},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/dummy/repo"}},
+			expectedTitle: "",
+			expectedBody:  "↓5",
+			expectedColor: "brightCyan",
+		},
+		{
+			name: "Up-to-date with upstream (identical)",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-list --left-right --count HEAD...@{upstream}" {
+					return "0\t0\n", nil
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-ahead-behind"},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/dummy/repo"}},
+			expectedTitle: "",
+			expectedBody:  "≡",
+			expectedColor: "brightCyan",
+		},
+		{
+			name: "Custom symbol",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-list --left-right --count HEAD...@{upstream}" {
+					return "1\t0\n", nil
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-ahead-behind", Symbol: "⇅ "},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/dummy/repo"}},
+			expectedTitle: "",
+			expectedBody:  "⇅ ↑1",
+			expectedColor: "brightCyan",
+		},
+		{
+			name: "Custom symbol with Raw=true",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-list --left-right --count HEAD...@{upstream}" {
+					return "1\t0\n", nil
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-ahead-behind", Symbol: "⇅ ", Raw: true},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/dummy/repo"}},
+			expectedTitle: "",
+			expectedBody:  "↑1",
+			expectedColor: "brightCyan",
+		},
+		{
+			name: "Non-git directory",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				return "false", fmt.Errorf("not a git repository")
+			},
+			item:          types.WidgetItem{Type: "git-ahead-behind"},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/tmp/non-git-dir"}},
+			expectedTitle: "",
+			expectedBody:  "(no git)",
+			expectedColor: "brightCyan",
+		},
+		{
+			name: "No upstream configured",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-list --left-right --count HEAD...@{upstream}" {
+					return "", fmt.Errorf("fatal: no upstream configured for branch 'feat'")
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-ahead-behind"},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/dummy/repo"}},
+			expectedTitle: "",
+			expectedBody:  "(no upstream)",
+			expectedColor: "brightCyan",
+		},
+		{
+			name: "Malformed rev-list output",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-list --left-right --count HEAD...@{upstream}" {
+					return "corrupt data", nil
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-ahead-behind"},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/dummy/repo"}},
+			expectedTitle: "",
+			expectedBody:  "(no upstream)",
+			expectedColor: "brightCyan",
+		},
+	}
+
+	oldRunner := runGitCommand
+	defer func() { runGitCommand = oldRunner }()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.gitRunner != nil {
+				runGitCommand = tt.gitRunner
+			}
+			title, body, err := w.Render(tt.item, tt.ctx, settings)
+			if err != nil {
+				t.Fatalf("Render error: %v", err)
+			}
+			if title != tt.expectedTitle || body != tt.expectedBody {
+				t.Errorf("Expected title %q and body %q, got title %q and body %q", tt.expectedTitle, tt.expectedBody, title, body)
+			}
+			if color := w.GetBodyColor(tt.item, tt.ctx); color != tt.expectedColor {
+				t.Errorf("Expected body color %q, got %q", tt.expectedColor, color)
+			}
+		})
+	}
+}
+
+func TestParseAheadBehind(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          string
+		expectedAhead  int
+		expectedBehind int
+		expectErr      bool
+	}{
+		{
+			name:           "Valid tab-separated count",
+			input:          "2\t1\n",
+			expectedAhead:  2,
+			expectedBehind: 1,
+			expectErr:      false,
+		},
+		{
+			name:           "Valid space-separated count",
+			input:          "0 4",
+			expectedAhead:  0,
+			expectedBehind: 4,
+			expectErr:      false,
+		},
+		{
+			name:           "Both zero",
+			input:          "0\t0",
+			expectedAhead:  0,
+			expectedBehind: 0,
+			expectErr:      false,
+		},
+		{
+			name:           "Empty string",
+			input:          "",
+			expectedAhead:  0,
+			expectedBehind: 0,
+			expectErr:      true,
+		},
+		{
+			name:           "Single number only",
+			input:          "2",
+			expectedAhead:  0,
+			expectedBehind: 0,
+			expectErr:      true,
+		},
+		{
+			name:           "Non-numeric tokens",
+			input:          "foo bar",
+			expectedAhead:  0,
+			expectedBehind: 0,
+			expectErr:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ahead, behind, err := parseAheadBehind(tt.input)
+			if (err != nil) != tt.expectErr {
+				t.Fatalf("For %q expected err=%v, got err=%v", tt.input, tt.expectErr, err)
+			}
+			if ahead != tt.expectedAhead || behind != tt.expectedBehind {
+				t.Errorf("For %q expected (%d, %d), got (%d, %d)", tt.input, tt.expectedAhead, tt.expectedBehind, ahead, behind)
+			}
+		})
+	}
+}
+
 func TestGitWidgets_CommandTimeoutAndFallback(t *testing.T) {
 	RegisterAll()
 	settings := types.DefaultSettings()
@@ -307,6 +576,15 @@ func TestGitWidgets_CommandTimeoutAndFallback(t *testing.T) {
 	title, body, err = gc.Render(types.WidgetItem{Type: "git-changes"}, ctx, settings)
 	if err != nil {
 		t.Fatalf("GitChanges render error: %v", err)
+	}
+	if title != "" || body != "(no git)" {
+		t.Errorf("Expected fallback '(no git)', got title %q, body %q", title, body)
+	}
+
+	gah := GetWidget("git-ahead-behind")
+	title, body, err = gah.Render(types.WidgetItem{Type: "git-ahead-behind"}, ctx, settings)
+	if err != nil {
+		t.Fatalf("GitAheadBehind render error: %v", err)
 	}
 	if title != "" || body != "(no git)" {
 		t.Errorf("Expected fallback '(no git)', got title %q, body %q", title, body)

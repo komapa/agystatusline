@@ -310,3 +310,135 @@ func TestIntegration_Git_WorktreeFile(t *testing.T) {
 		t.Errorf("Expected worktree branch 'wt-branch', got %q", plainWt)
 	}
 }
+
+// TestIntegration_Git_AheadBehind tests git-ahead-behind with real local and upstream repos.
+func TestIntegration_Git_AheadBehind(t *testing.T) {
+	cacheDir := setupTestCacheDir(t)
+	widgets.RegisterAll()
+
+	repoDir := setupGitRepo(t, "main")
+	remoteDir := t.TempDir()
+
+	// 1. Initialize bare remote repository and set upstream
+	cmdBare := exec.Command("git", "init", "--bare", "-b", "main", remoteDir)
+	if err := cmdBare.Run(); err != nil {
+		if err := exec.Command("git", "init", "--bare", remoteDir).Run(); err != nil {
+			t.Fatalf("Failed to init bare remote: %v", err)
+		}
+		_ = exec.Command("git", "-C", remoteDir, "symbolic-ref", "HEAD", "refs/heads/main").Run()
+	}
+	_ = exec.Command("git", "-C", repoDir, "remote", "add", "origin", remoteDir).Run()
+	if err := exec.Command("git", "-C", repoDir, "push", "-u", "origin", "main").Run(); err != nil {
+		t.Fatalf("Failed to push initial commit to remote: %v", err)
+	}
+
+	clearAllCache := func() {
+		_ = os.RemoveAll(filepath.Join(cacheDir, "git-cache"))
+		utils.ClearGitCache()
+	}
+
+	clearAllCache()
+	ctx := types.RenderContext{
+		Data: types.StatusJSON{
+			CWD: repoDir,
+		},
+		GitCacheTTLSeconds: 5,
+	}
+	settings := types.DefaultSettings()
+
+	w := widgets.GetWidget("git-ahead-behind")
+	if w == nil {
+		t.Fatalf("git-ahead-behind widget not found")
+	}
+
+	// Case 1: Up-to-date with upstream
+	title, body, err := w.Render(types.WidgetItem{Type: "git-ahead-behind"}, ctx, settings)
+	if err != nil {
+		t.Fatalf("Render error: %v", err)
+	}
+	if plain := renderer.StripAnsi(title + body); plain != "≡" {
+		t.Errorf("Expected up-to-date '≡', got %q", plain)
+	}
+
+	// Case 2: Ahead by 1 commit
+	testFile := filepath.Join(repoDir, "ahead.txt")
+	_ = os.WriteFile(testFile, []byte("ahead content\n"), 0644)
+	_ = exec.Command("git", "-C", repoDir, "add", "ahead.txt").Run()
+	_ = exec.Command("git", "-C", repoDir, "commit", "-m", "Commit ahead").Run()
+
+	clearAllCache()
+	title, body, _ = w.Render(types.WidgetItem{Type: "git-ahead-behind"}, ctx, settings)
+	if plain := renderer.StripAnsi(title + body); plain != "↑1" {
+		t.Errorf("Expected ahead '↑1', got %q", plain)
+	}
+
+	// Case 3: Diverged (1 ahead, 1 behind)
+	// Clone remote to a secondary working tree and push a divergent commit
+	cloneDir := t.TempDir()
+	if out, err := exec.Command("git", "clone", "-b", "main", remoteDir, cloneDir).CombinedOutput(); err != nil {
+		t.Fatalf("Clone failed: %v, out: %s", err, string(out))
+	}
+	_ = exec.Command("git", "-C", cloneDir, "config", "user.name", "Test User").Run()
+	_ = exec.Command("git", "-C", cloneDir, "config", "user.email", "test@example.com").Run()
+	remoteCommitFile := filepath.Join(cloneDir, "remote.txt")
+	_ = os.WriteFile(remoteCommitFile, []byte("remote commit\n"), 0644)
+	_ = exec.Command("git", "-C", cloneDir, "add", "remote.txt").Run()
+	_ = exec.Command("git", "-C", cloneDir, "commit", "-m", "Remote commit").Run()
+	if out, err := exec.Command("git", "-C", cloneDir, "push", "origin", "main").CombinedOutput(); err != nil {
+		t.Fatalf("Push failed: %v, out: %s", err, string(out))
+	}
+
+	// Fetch remote in primary repo
+	if out, err := exec.Command("git", "-C", repoDir, "fetch", "origin").CombinedOutput(); err != nil {
+		t.Fatalf("Fetch failed: %v, out: %s", err, string(out))
+	}
+
+	clearAllCache()
+	title, body, _ = w.Render(types.WidgetItem{Type: "git-ahead-behind"}, ctx, settings)
+	if plain := renderer.StripAnsi(title + body); plain != "↑1 ↓1" {
+		t.Errorf("Expected diverged '↑1 ↓1', got %q", plain)
+	}
+
+	// Case 4: Behind only (reset local branch to origin/main^ to be behind)
+	_ = exec.Command("git", "-C", repoDir, "reset", "--hard", "origin/main").Run()
+	_ = exec.Command("git", "-C", repoDir, "reset", "--hard", "HEAD~1").Run()
+
+	clearAllCache()
+	title, body, _ = w.Render(types.WidgetItem{Type: "git-ahead-behind"}, ctx, settings)
+	if plain := renderer.StripAnsi(title + body); plain != "↓1" {
+		t.Errorf("Expected behind '↓1', got %q", plain)
+	}
+
+	// Case 5: Branch with no upstream configured
+	_ = exec.Command("git", "-C", repoDir, "checkout", "-b", "local-only-branch").Run()
+
+	clearAllCache()
+	title, body, _ = w.Render(types.WidgetItem{Type: "git-ahead-behind"}, ctx, settings)
+	if plain := renderer.StripAnsi(title + body); plain != "(no upstream)" {
+		t.Errorf("Expected '(no upstream)', got %q", plain)
+	}
+
+	// Case 6: Custom symbol
+	title, body, _ = w.Render(types.WidgetItem{Type: "git-ahead-behind", Symbol: "⇅ "}, ctx, settings)
+	if plain := renderer.StripAnsi(title + body); plain != "⇅ (no upstream)" {
+		t.Errorf("Expected '⇅ (no upstream)', got %q", plain)
+	}
+
+	// Case 7: Custom symbol with Raw=true
+	title, body, _ = w.Render(types.WidgetItem{Type: "git-ahead-behind", Symbol: "⇅ ", Raw: true}, ctx, settings)
+	if plain := renderer.StripAnsi(title + body); plain != "(no upstream)" {
+		t.Errorf("Expected '(no upstream)', got %q", plain)
+	}
+
+	// Case 8: Non-git directory
+	nonGitCtx := types.RenderContext{
+		Data: types.StatusJSON{
+			CWD: t.TempDir(),
+		},
+		GitCacheTTLSeconds: 5,
+	}
+	title, body, _ = w.Render(types.WidgetItem{Type: "git-ahead-behind"}, nonGitCtx, settings)
+	if plain := renderer.StripAnsi(title + body); plain != "(no git)" {
+		t.Errorf("Expected '(no git)', got %q", plain)
+	}
+}

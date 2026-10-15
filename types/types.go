@@ -183,7 +183,7 @@ func (w *WidgetItem) UnmarshalTOML(data any) error {
 			case "custom-text", "custom":
 				w.Type = "custom-text"
 				w.Text = param
-			case "git-branch":
+			case "git-branch", "git-ahead-behind":
 				w.Symbol = param
 			default:
 				w.Key = strings.TrimSpace(param)
@@ -243,8 +243,8 @@ func (w WidgetItem) MarshalTOML() (any, error) {
 		if w.Type == "custom-text" && w.Text != "" && w.Key == "" && w.Symbol == "" {
 			return "custom-text:" + w.Text, nil
 		}
-		if w.Type == "git-branch" && w.Symbol != "" && w.Key == "" && w.Text == "" {
-			return "git-branch:" + w.Symbol, nil
+		if (w.Type == "git-branch" || w.Type == "git-ahead-behind") && w.Symbol != "" && w.Key == "" && w.Text == "" {
+			return w.Type + ":" + w.Symbol, nil
 		}
 		if w.Key == "" && w.Text == "" && w.Symbol == "" && w.Type != "" {
 			return w.Type, nil

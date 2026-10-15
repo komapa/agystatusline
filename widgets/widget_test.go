@@ -56,6 +56,7 @@ func TestGetWidget(t *testing.T) {
 		{name: "Valid widget model", wName: "model", expectNil: false},
 		{name: "Valid widget git-branch", wName: "git-branch", expectNil: false},
 		{name: "Valid widget git-changes", wName: "git-changes", expectNil: false},
+		{name: "Valid widget git-ahead-behind", wName: "git-ahead-behind", expectNil: false},
 		{name: "Valid widget custom-text", wName: "custom-text", expectNil: false},
 		{name: "Valid widget sandbox", wName: "sandbox", expectNil: false},
 		{name: "Valid widget agent-state", wName: "agent-state", expectNil: false},
@@ -142,7 +143,7 @@ func TestWidgets_ConcurrentRenderStress(t *testing.T) {
 	settings := types.DefaultSettings()
 
 	widgetsList := []string{
-		"model", "git-branch", "git-changes", "quota", "custom-text",
+		"model", "git-branch", "git-changes", "git-ahead-behind", "quota", "custom-text",
 		"sandbox", "agent-state", "context-bar", "quota-bar", "artifacts",
 		"subagents", "tasks",
 	}
@@ -206,7 +207,7 @@ func TestAdversarialStressAllWidgets_ExtremeEdgeCases(t *testing.T) {
 
 	widgetsList := []string{
 		"model", "context-bar", "agent-state", "artifacts", "subagents",
-		"tasks", "sandbox", "quota", "quota-bar", "git-branch", "git-changes", "custom-text",
+		"tasks", "sandbox", "quota", "quota-bar", "git-branch", "git-changes", "git-ahead-behind", "custom-text",
 	}
 
 	// 1. Extreme numeric and pointer fixtures

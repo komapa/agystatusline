@@ -1076,6 +1076,7 @@ func TestTUI_WidgetTypesOrdering(t *testing.T) {
 		"sandbox",
 		"git-branch",
 		"git-changes",
+		"git-ahead-behind",
 		"quota-5h",
 		"quota-7d",
 		"quota-3p-5h",
