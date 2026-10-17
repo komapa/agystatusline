@@ -14,3 +14,6 @@ result
 # Test coverage outputs
 coverage.out
 
+# Raw telemetry test data
+test_data_raw*.json
+

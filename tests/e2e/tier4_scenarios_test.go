@@ -27,8 +27,8 @@ func TestE2E_Tier4_TestDataJsonPipeline(t *testing.T) {
 	}
 
 	plain := stripANSI(stdout)
-	if !strings.Contains(plain, "Gemini 3.5 Flash") {
-		t.Errorf("Expected model 'Gemini 3.5 Flash' in output, got %q", plain)
+	if !strings.Contains(plain, "Gemini 3.8 Flash") {
+		t.Errorf("Expected model 'Gemini 3.8 Flash' in output, got %q", plain)
 	}
 	if !strings.Contains(plain, "● READY") {
 		t.Errorf("Expected agent-state '● READY' in output, got %q", plain)

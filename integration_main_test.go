@@ -351,8 +351,8 @@ func TestRunMain_TestDataJsonPipeline(t *testing.T) {
 	out := stdout.String()
 	plain := renderer.StripAnsi(out)
 
-	if !strings.Contains(plain, "Gemini 3.5 Flash") {
-		t.Errorf("Expected output to contain 'Gemini 3.5 Flash', got %q", plain)
+	if !strings.Contains(plain, "Gemini 3.8 Flash") {
+		t.Errorf("Expected output to contain 'Gemini 3.8 Flash', got %q", plain)
 	}
 	if !strings.Contains(plain, "feature/e2e-test*") {
 		t.Errorf("Expected output to contain 'feature/e2e-test*', got %q", plain)
@@ -402,8 +402,8 @@ func TestBinaryExec_TestDataJsonPipeline(t *testing.T) {
 	out := stdout.String()
 	plain := renderer.StripAnsi(out)
 
-	if !strings.Contains(plain, "Gemini 3.5 Flash") {
-		t.Errorf("Expected binary stdout to contain 'Gemini 3.5 Flash', got %q", plain)
+	if !strings.Contains(plain, "Gemini 3.8 Flash") {
+		t.Errorf("Expected binary stdout to contain 'Gemini 3.8 Flash', got %q", plain)
 	}
 	if !strings.Contains(plain, "feature/e2e-test*") {
 		t.Errorf("Expected binary stdout to contain 'feature/e2e-test*', got %q", plain)
