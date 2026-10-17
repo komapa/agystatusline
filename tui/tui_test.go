@@ -1075,6 +1075,7 @@ func TestTUI_WidgetTypesOrdering(t *testing.T) {
 		"tasks",
 		"sandbox",
 		"git-branch",
+		"git-ahead-behind",
 		"git-changes",
 		"quota-5h",
 		"quota-7d",
@@ -1087,19 +1088,14 @@ func TestTUI_WidgetTypesOrdering(t *testing.T) {
 		"custom-text",
 	}
 
-	for _, expected := range expectedTypes {
-		t.Run("HasWidget_"+expected, func(t *testing.T) {
-			var found bool
-			for _, wt := range widgetTypes {
-				if wt.item.Type == expected {
-					found = true
-					break
-				}
-			}
-			if !found {
-				t.Errorf("Expected widget type %q to be present in widgetTypes", expected)
-			}
-		})
+	if len(widgetTypes) != len(expectedTypes) {
+		t.Fatalf("Expected %d widget types, got %d", len(expectedTypes), len(widgetTypes))
+	}
+
+	for i, expected := range expectedTypes {
+		if widgetTypes[i].item.Type != expected {
+			t.Errorf("At index %d: expected widget type %q, got %q", i, expected, widgetTypes[i].item.Type)
+		}
 	}
 }
 

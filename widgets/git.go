@@ -115,3 +115,80 @@ func parseShortStat(stat string) (int, int) {
 
 	return ins, del
 }
+
+// GitAheadBehindWidget displays Git ahead/behind commits count against remote upstream.
+type GitAheadBehindWidget struct{}
+
+func (g *GitAheadBehindWidget) GetDefaultColor() string { return "brightCyan" }
+func (g *GitAheadBehindWidget) GetDisplayName() string  { return "Git Ahead/Behind" }
+func (g *GitAheadBehindWidget) GetBodyColor(item types.WidgetItem, ctx types.RenderContext) string {
+	return "brightCyan"
+}
+
+func (g *GitAheadBehindWidget) Render(item types.WidgetItem, ctx types.RenderContext, settings types.Settings) (string, string, error) {
+	if ctx.IsPreview {
+		body := "↑2 ↓1"
+		if item.Symbol != "" && !item.Raw {
+			body = item.Symbol + body
+		}
+		return "", body, nil
+	}
+
+	// Check if inside git tree
+	isGit, err := runGitCommand("rev-parse --is-inside-work-tree", ctx, ctx.GitCacheTTLSeconds)
+	if err != nil || strings.TrimSpace(isGit) != "true" {
+		body := "(no git)"
+		if item.Symbol != "" && !item.Raw {
+			body = item.Symbol + body
+		}
+		return "", body, nil
+	}
+
+	out, err := runGitCommand("rev-list --left-right --count HEAD...@{upstream}", ctx, ctx.GitCacheTTLSeconds)
+	if err != nil {
+		body := "(no upstream)"
+		if item.Symbol != "" && !item.Raw {
+			body = item.Symbol + body
+		}
+		return "", body, nil
+	}
+
+	ahead, behind, err := parseAheadBehind(out)
+	if err != nil {
+		body := "(no upstream)"
+		if item.Symbol != "" && !item.Raw {
+			body = item.Symbol + body
+		}
+		return "", body, nil
+	}
+
+	var body string
+	if ahead > 0 && behind > 0 {
+		body = fmt.Sprintf("↑%d ↓%d", ahead, behind)
+	} else if ahead > 0 {
+		body = fmt.Sprintf("↑%d", ahead)
+	} else if behind > 0 {
+		body = fmt.Sprintf("↓%d", behind)
+	} else {
+		body = "≡"
+	}
+
+	if item.Symbol != "" && !item.Raw {
+		body = item.Symbol + body
+	}
+
+	return "", body, nil
+}
+
+func parseAheadBehind(out string) (int, int, error) {
+	fields := strings.Fields(out)
+	if len(fields) < 2 {
+		return 0, 0, fmt.Errorf("unexpected rev-list count output: %q", out)
+	}
+	ahead, err1 := strconv.Atoi(fields[0])
+	behind, err2 := strconv.Atoi(fields[1])
+	if err1 != nil || err2 != nil {
+		return 0, 0, fmt.Errorf("invalid rev-list count: %q", out)
+	}
+	return ahead, behind, nil
+}

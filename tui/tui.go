@@ -97,6 +97,7 @@ var widgetTypes = []struct {
 
 	// Git-related
 	{name: "Git Branch", item: types.WidgetItem{Type: "git-branch"}},
+	{name: "Git Ahead/Behind", item: types.WidgetItem{Type: "git-ahead-behind"}},
 	{name: "Git Changes", item: types.WidgetItem{Type: "git-changes"}},
 
 	// Quota

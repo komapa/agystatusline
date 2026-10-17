@@ -64,6 +64,7 @@ func RegisterAll() {
 	RegisterWidget("model", &ModelWidget{})
 	RegisterWidget("git-branch", &GitBranchWidget{})
 	RegisterWidget("git-changes", &GitChangesWidget{})
+	RegisterWidget("git-ahead-behind", &GitAheadBehindWidget{})
 	RegisterWidget("custom-text", &CustomTextWidget{})
 	RegisterWidget("sandbox", &SandboxWidget{})
 	RegisterWidget("agent-state", &AgentStateWidget{})

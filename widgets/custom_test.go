@@ -16,7 +16,7 @@ func TestWidgetInterfaces(t *testing.T) {
 	}
 
 	widgetsList := []string{
-		"model", "git-branch", "git-changes", "quota", "custom-text",
+		"model", "git-branch", "git-changes", "git-ahead-behind", "quota", "custom-text",
 		"sandbox", "agent-state", "context-bar", "quota-bar", "artifacts",
 		"subagents", "tasks",
 	}
