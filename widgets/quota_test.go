@@ -85,6 +85,22 @@ func TestQuotaWidget(t *testing.T) {
 			expectedBody:  "50.19% (2h 28m)",
 		},
 		{
+			name: "gemini-argon-wtu-weekly default label uses key",
+			item: types.WidgetItem{Type: "quota", Key: "gemini-argon-wtu-weekly"},
+			ctx: types.RenderContext{
+				Data: types.StatusJSON{
+					Quota: map[string]types.QuotaInfo{
+						"gemini-argon-wtu-weekly": {
+							RemainingFraction: &remaining2,
+							ResetInSeconds:    &resetInSecs2,
+						},
+					},
+				},
+			},
+			expectedTitle: "gemini-argon-wtu-weekly",
+			expectedBody:  "100.00% (4h 59m)",
+		},
+		{
 			name:          "Raw Percentage + Reset (Raw = true)",
 			item:          types.WidgetItem{Type: "quota", Key: "gemini-5h", Raw: true},
 			ctx:           standardCtx,
@@ -280,6 +296,12 @@ func TestQuotaBarWidget(t *testing.T) {
 				expectedTitle: "7d",
 			},
 			{
+				name:          "gemini-argon-wtu-weekly maps to argon-7d",
+				item:          types.WidgetItem{Type: "quota-bar", Key: "gemini-argon-wtu-weekly"},
+				ctx:           types.RenderContext{Data: types.StatusJSON{Quota: map[string]types.QuotaInfo{"gemini-argon-wtu-weekly": {RemainingFraction: &pct}}}},
+				expectedTitle: "argon-7d",
+			},
+			{
 				name:          "3p-weekly maps to 3p-7d",
 				item:          types.WidgetItem{Type: "quota-bar", Key: "3p-weekly"},
 				ctx:           types.RenderContext{Data: types.StatusJSON{Quota: map[string]types.QuotaInfo{"3p-weekly": {RemainingFraction: &pct}}}},
@@ -425,6 +447,10 @@ func TestSpecificQuotaWidgets(t *testing.T) {
 					RemainingFraction: &remaining2,
 					ResetInSeconds:    &resetInSecs2,
 				},
+				"gemini-argon-wtu-weekly": {
+					RemainingFraction: &remaining2,
+					ResetInSeconds:    &resetInSecs2,
+				},
 				"3p-5h": {
 					RemainingFraction: &remaining1,
 					ResetInSeconds:    &resetInSecs1,
@@ -446,10 +472,12 @@ func TestSpecificQuotaWidgets(t *testing.T) {
 	}{
 		{"quota-5h", "5h", "50.19% (2h 28m)", "Quota: 5h"},
 		{"quota-7d", "7d", "90.00% (6d 23h)", "Quota: 7d"},
+		{"quota-argon-7d", "argon-7d", "90.00% (6d 23h)", "Quota: Argon 7d"},
 		{"quota-3p-5h", "3p-5h", "50.19% (2h 28m)", "Quota: 3P 5h"},
 		{"quota-3p-7d", "3p-7d", "90.00% (6d 23h)", "Quota: 3P 7d"},
 		{"quota-bar-5h", "5h", "█████····· 50.2% (2h 28m)", "Quota Bar: 5h"},
 		{"quota-bar-7d", "7d", "█████████· 90.0% (6d 23h)", "Quota Bar: 7d"},
+		{"quota-bar-argon-7d", "argon-7d", "█████████· 90.0% (6d 23h)", "Quota Bar: Argon 7d"},
 		{"quota-bar-3p-5h", "3p-5h", "█████····· 50.2% (2h 28m)", "Quota Bar: 3P 5h"},
 		{"quota-bar-3p-7d", "3p-7d", "█████████· 90.0% (6d 23h)", "Quota Bar: 3P 7d"},
 	}
@@ -539,11 +567,37 @@ func TestQuotaWidgets_ExtremeBoundaryValues(t *testing.T) {
 			},
 		},
 		{
+			name:       "1.0 fraction (100% remaining) on Quota Argon",
+			widgetType: "quota-argon-7d",
+			quotaInfo:  types.QuotaInfo{RemainingFraction: &oneFraction},
+			verify: func(t *testing.T, title, body, color string) {
+				if title != "argon-7d" || body != "100.00%" {
+					t.Errorf("Expected argon-7d and 100.00%%, got title=%q, body=%q", title, body)
+				}
+				if color != "brightWhite" {
+					t.Errorf("Expected brightWhite, got %q", color)
+				}
+			},
+		},
+		{
 			name:       "1.0 fraction on Quota Bar (100% remaining)",
 			widgetType: "quota-bar-7d",
 			quotaInfo:  types.QuotaInfo{RemainingFraction: &oneFraction},
 			verify: func(t *testing.T, title, body, color string) {
 				if title != "7d" || !strings.HasPrefix(body, "██████████ 100.0%") {
+					t.Errorf("Expected full bar and 100.0%%, got title=%q, body=%q", title, body)
+				}
+				if color != "brightGreen" {
+					t.Errorf("Expected brightGreen for 100%% bar, got %q", color)
+				}
+			},
+		},
+		{
+			name:       "1.0 fraction on Quota Bar Argon (100% remaining)",
+			widgetType: "quota-bar-argon-7d",
+			quotaInfo:  types.QuotaInfo{RemainingFraction: &oneFraction},
+			verify: func(t *testing.T, title, body, color string) {
+				if title != "argon-7d" || !strings.HasPrefix(body, "██████████ 100.0%") {
 					t.Errorf("Expected full bar and 100.0%%, got title=%q, body=%q", title, body)
 				}
 				if color != "brightGreen" {
@@ -665,6 +719,8 @@ func TestQuotaWidgets_ExtremeBoundaryValues(t *testing.T) {
 			switch tt.widgetType {
 			case "quota-7d", "quota-bar-7d":
 				key = "gemini-weekly"
+			case "quota-argon-7d", "quota-bar-argon-7d":
+				key = "gemini-argon-wtu-weekly"
 			case "quota-3p-5h", "quota-bar-3p-5h":
 				key = "3p-5h"
 			case "quota-3p-7d", "quota-bar-3p-7d":

@@ -381,22 +381,24 @@ func TestTUI_AddQuotaBarWidgets(t *testing.T) {
 	}
 
 	// 2. ウィジェット追加リストにクォータバーウィジェットが含まれているか確認
-	var foundG5hB, foundGwkB, found3p5hB, found3pwkB bool
+	var foundG5hB, foundGwkB, foundArgonB, found3p5hB, found3pwkB bool
 	for _, wt := range widgetTypes {
 		switch wt.item.Type {
 		case "quota-bar-5h":
 			foundG5hB = true
 		case "quota-bar-7d":
 			foundGwkB = true
+		case "quota-bar-argon-7d":
+			foundArgonB = true
 		case "quota-bar-3p-5h":
 			found3p5hB = true
 		case "quota-bar-3p-7d":
 			found3pwkB = true
 		}
 	}
-	if !foundG5hB || !foundGwkB || !found3p5hB || !found3pwkB {
-		t.Errorf("Expected all 4 quota-bar presets in widgetTypes, got Gemini 5h Bar:%t, Gemini 7d Bar:%t, 3P 5h Bar:%t, 3P 7d Bar:%t",
-			foundG5hB, foundGwkB, found3p5hB, found3pwkB)
+	if !foundG5hB || !foundGwkB || !foundArgonB || !found3p5hB || !found3pwkB {
+		t.Errorf("Expected all 5 quota-bar presets in widgetTypes, got Gemini 5h Bar:%t, Gemini 7d Bar:%t, Argon 7d Bar:%t, 3P 5h Bar:%t, 3P 7d Bar:%t",
+			foundG5hB, foundGwkB, foundArgonB, found3p5hB, found3pwkB)
 	}
 
 	// 3. 実際に Gemini 5h クォータ Bar ウィジェットを追加してみる。
@@ -1079,10 +1081,12 @@ func TestTUI_WidgetTypesOrdering(t *testing.T) {
 		"git-changes",
 		"quota-5h",
 		"quota-7d",
+		"quota-argon-7d",
 		"quota-3p-5h",
 		"quota-3p-7d",
 		"quota-bar-5h",
 		"quota-bar-7d",
+		"quota-bar-argon-7d",
 		"quota-bar-3p-5h",
 		"quota-bar-3p-7d",
 		"custom-text",
