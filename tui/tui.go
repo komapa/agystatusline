@@ -103,12 +103,14 @@ var widgetTypes = []struct {
 	// Quota
 	{name: "Quota: 5h", item: types.WidgetItem{Type: "quota-5h"}},
 	{name: "Quota: 7d", item: types.WidgetItem{Type: "quota-7d"}},
+	{name: "Quota: Argon 7d", item: types.WidgetItem{Type: "quota-argon-7d"}},
 	{name: "Quota: 3P 5h", item: types.WidgetItem{Type: "quota-3p-5h"}},
 	{name: "Quota: 3P 7d", item: types.WidgetItem{Type: "quota-3p-7d"}},
 
 	// Quota Bar
 	{name: "Quota Bar: 5h", item: types.WidgetItem{Type: "quota-bar-5h"}},
 	{name: "Quota Bar: 7d", item: types.WidgetItem{Type: "quota-bar-7d"}},
+	{name: "Quota Bar: Argon 7d", item: types.WidgetItem{Type: "quota-bar-argon-7d"}},
 	{name: "Quota Bar: 3P 5h", item: types.WidgetItem{Type: "quota-bar-3p-5h"}},
 	{name: "Quota Bar: 3P 7d", item: types.WidgetItem{Type: "quota-bar-3p-7d"}},
 
@@ -661,6 +663,8 @@ func (m Model) View() string {
 	p35hReset := 17956.0
 	gWkFraction := 0.9090967
 	gWkReset := 567440.0
+	gArgonFraction := 1.0
+	gArgonReset := 604724.0
 	p3WkFraction := 1.0
 	p3WkReset := 604756.0
 	sandboxEnabled := true
@@ -689,6 +693,10 @@ func (m Model) View() string {
 				"gemini-weekly": {
 					RemainingFraction: &gWkFraction,
 					ResetInSeconds:    &gWkReset,
+				},
+				"gemini-argon-wtu-weekly": {
+					RemainingFraction: &gArgonFraction,
+					ResetInSeconds:    &gArgonReset,
 				},
 				"3p-5h": {
 					RemainingFraction: &p35hFraction,

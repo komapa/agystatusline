@@ -1201,24 +1201,28 @@ func TestWidgetItem_QuotaShorthand_AllVariants(t *testing.T) {
 		// Individual Quota widgets
 		{"quota-5h plain", `"quota-5h"`, WidgetItem{Type: "quota-5h"}, true},
 		{"quota-7d plain", `"quota-7d"`, WidgetItem{Type: "quota-7d"}, true},
+		{"quota-argon-7d plain", `"quota-argon-7d"`, WidgetItem{Type: "quota-argon-7d"}, true},
 		{"quota-3p-5h plain", `"quota-3p-5h"`, WidgetItem{Type: "quota-3p-5h"}, true},
 		{"quota-3p-7d plain", `"quota-3p-7d"`, WidgetItem{Type: "quota-3p-7d"}, true},
 
 		// Individual Quota-Bar widgets
 		{"quota-bar-5h plain", `"quota-bar-5h"`, WidgetItem{Type: "quota-bar-5h"}, true},
 		{"quota-bar-7d plain", `"quota-bar-7d"`, WidgetItem{Type: "quota-bar-7d"}, true},
+		{"quota-bar-argon-7d plain", `"quota-bar-argon-7d"`, WidgetItem{Type: "quota-bar-argon-7d"}, true},
 		{"quota-bar-3p-5h plain", `"quota-bar-3p-5h"`, WidgetItem{Type: "quota-bar-3p-5h"}, true},
 		{"quota-bar-3p-7d plain", `"quota-bar-3p-7d"`, WidgetItem{Type: "quota-bar-3p-7d"}, true},
 
 		// Quota colon shorthands
 		{"quota:gemini-5h shorthand", `"quota:gemini-5h"`, WidgetItem{Type: "quota", Key: "gemini-5h"}, true},
 		{"quota:gemini-weekly shorthand", `"quota:gemini-weekly"`, WidgetItem{Type: "quota", Key: "gemini-weekly"}, true},
+		{"quota:gemini-argon-wtu-weekly shorthand", `"quota:gemini-argon-wtu-weekly"`, WidgetItem{Type: "quota", Key: "gemini-argon-wtu-weekly"}, true},
 		{"quota:3p-5h shorthand", `"quota:3p-5h"`, WidgetItem{Type: "quota", Key: "3p-5h"}, true},
 		{"quota:3p-weekly shorthand", `"quota:3p-weekly"`, WidgetItem{Type: "quota", Key: "3p-weekly"}, true},
 
 		// Quota-Bar colon shorthands
 		{"quota-bar:gemini-5h shorthand", `"quota-bar:gemini-5h"`, WidgetItem{Type: "quota-bar", Key: "gemini-5h"}, true},
 		{"quota-bar:gemini-weekly shorthand", `"quota-bar:gemini-weekly"`, WidgetItem{Type: "quota-bar", Key: "gemini-weekly"}, true},
+		{"quota-bar:gemini-argon-wtu-weekly shorthand", `"quota-bar:gemini-argon-wtu-weekly"`, WidgetItem{Type: "quota-bar", Key: "gemini-argon-wtu-weekly"}, true},
 		{"quota-bar:3p-5h shorthand", `"quota-bar:3p-5h"`, WidgetItem{Type: "quota-bar", Key: "3p-5h"}, true},
 		{"quota-bar:3p-weekly shorthand", `"quota-bar:3p-weekly"`, WidgetItem{Type: "quota-bar", Key: "3p-weekly"}, true},
 	}
@@ -1271,8 +1275,8 @@ func TestWidgetItem_QuotaShorthand_AllVariants(t *testing.T) {
 func TestSettings_QuotaAllVariants_FullDocumentRoundTrip(t *testing.T) {
 	tomlDoc := `
 lines = [
-  ["quota-5h", "quota-7d", "quota-3p-5h", "quota-3p-7d"],
-  ["quota-bar-5h", "quota-bar-7d", "quota-bar-3p-5h", "quota-bar-3p-7d"],
+  ["quota-5h", "quota-7d", "quota-argon-7d", "quota-3p-5h", "quota-3p-7d"],
+  ["quota-bar-5h", "quota-bar-7d", "quota-bar-argon-7d", "quota-bar-3p-5h", "quota-bar-3p-7d"],
   ["quota:gemini-5h", "quota:3p-weekly", "quota-bar:gemini-weekly", "quota-bar:3p-5h"]
 ]
 
@@ -1293,8 +1297,8 @@ color_level = 1
 	if len(s.Lines) != 3 {
 		t.Fatalf("Expected 3 lines, got %d", len(s.Lines))
 	}
-	if len(s.Lines[0]) != 4 || len(s.Lines[1]) != 4 || len(s.Lines[2]) != 4 {
-		t.Fatalf("Expected 4 items per line, got %d, %d, %d", len(s.Lines[0]), len(s.Lines[1]), len(s.Lines[2]))
+	if len(s.Lines[0]) != 5 || len(s.Lines[1]) != 5 || len(s.Lines[2]) != 4 {
+		t.Fatalf("Expected 5, 5, 4 items per line, got %d, %d, %d", len(s.Lines[0]), len(s.Lines[1]), len(s.Lines[2]))
 	}
 
 	marshaled, err := toml.Marshal(s)

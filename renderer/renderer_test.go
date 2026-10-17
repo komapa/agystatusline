@@ -1089,6 +1089,10 @@ func TestRenderStatusLines_AllQuotaWidgets_ColorLevel1_Integrity(t *testing.T) {
 				RemainingFraction: &midFraction,
 				ResetInSeconds:    &secs,
 			},
+			"gemini-argon-wtu-weekly": {
+				RemainingFraction: &midFraction,
+				ResetInSeconds:    &secs,
+			},
 			"3p-5h": {
 				RemainingFraction: &lowFraction,
 				ResetInSeconds:    &secs,
@@ -1103,10 +1107,12 @@ func TestRenderStatusLines_AllQuotaWidgets_ColorLevel1_Integrity(t *testing.T) {
 	allQuotaWidgets := []types.WidgetItem{
 		{Type: "quota-5h"},
 		{Type: "quota-7d"},
+		{Type: "quota-argon-7d"},
 		{Type: "quota-3p-5h"},
 		{Type: "quota-3p-7d"},
 		{Type: "quota-bar-5h"},
 		{Type: "quota-bar-7d"},
+		{Type: "quota-bar-argon-7d"},
 		{Type: "quota-bar-3p-5h"},
 		{Type: "quota-bar-3p-7d"},
 	}
