@@ -544,6 +544,209 @@ func TestParseAheadBehind(t *testing.T) {
 	}
 }
 
+func TestGitRepoWidget(t *testing.T) {
+	RegisterAll()
+	w := GetWidget("git-repo")
+	if w == nil {
+		t.Fatalf("Git repo widget not found")
+	}
+	if w.GetDefaultColor() != "white" {
+		t.Errorf("Expected default color %q, got %q", "white", w.GetDefaultColor())
+	}
+	if w.GetDisplayName() != "Git Repository" {
+		t.Errorf("Expected display name %q, got %q", "Git Repository", w.GetDisplayName())
+	}
+
+	settings := types.DefaultSettings()
+
+	tests := []struct {
+		name          string
+		gitRunner     func(cmd string, ctx CwdResolver, ttl int) (string, error)
+		item          types.WidgetItem
+		ctx           types.RenderContext
+		expectedTitle string
+		expectedBody  string
+		expectedColor string
+	}{
+		{
+			name: "Normal git repository from command",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-parse --show-toplevel" {
+					return "/home/user/src/agystatusline", nil
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-repo"},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/home/user/src/agystatusline"}},
+			expectedTitle: "",
+			expectedBody:  "agystatusline",
+			expectedColor: "white",
+		},
+		{
+			name: "Normal git repository sub directory",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-parse --show-toplevel" {
+					return "/home/user/src/agystatusline", nil
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-repo"},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/home/user/src/agystatusline/widgets"}},
+			expectedTitle: "",
+			expectedBody:  "agystatusline",
+			expectedColor: "white",
+		},
+		{
+			name: "Custom symbol",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-parse --show-toplevel" {
+					return "/workspace/awesome-project", nil
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-repo", Symbol: "📦 "},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/workspace/awesome-project"}},
+			expectedTitle: "",
+			expectedBody:  "📦 awesome-project",
+			expectedColor: "white",
+		},
+		{
+			name: "Custom symbol with Raw=true",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-parse --show-toplevel" {
+					return "/workspace/awesome-project", nil
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-repo", Symbol: "📦 ", Raw: true},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/workspace/awesome-project"}},
+			expectedTitle: "",
+			expectedBody:  "awesome-project",
+			expectedColor: "white",
+		},
+		{
+			name: "Non-git directory",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				return "false", fmt.Errorf("not a git repository")
+			},
+			item:          types.WidgetItem{Type: "git-repo"},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/tmp/non-git-dir"}},
+			expectedTitle: "",
+			expectedBody:  "(no git)",
+			expectedColor: "white",
+		},
+		{
+			name: "Non-git directory with custom symbol",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				return "false", fmt.Errorf("not a git repository")
+			},
+			item:          types.WidgetItem{Type: "git-repo", Symbol: "📦 "},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/tmp/non-git-dir"}},
+			expectedTitle: "",
+			expectedBody:  "📦 (no git)",
+			expectedColor: "white",
+		},
+		{
+			name: "Non-git directory with custom symbol and Raw=true",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				return "false", fmt.Errorf("not a git repository")
+			},
+			item:          types.WidgetItem{Type: "git-repo", Symbol: "📦 ", Raw: true},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/tmp/non-git-dir"}},
+			expectedTitle: "",
+			expectedBody:  "(no git)",
+			expectedColor: "white",
+		},
+		{
+			name: "Git show-toplevel failure",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				if cmd == "rev-parse --is-inside-work-tree" {
+					return "true", nil
+				}
+				if cmd == "rev-parse --show-toplevel" {
+					return "", fmt.Errorf("rev-parse failed")
+				}
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-repo"},
+			ctx:           types.RenderContext{Data: types.StatusJSON{CWD: "/workspace/corrupt"}},
+			expectedTitle: "",
+			expectedBody:  "(no git)",
+			expectedColor: "white",
+		},
+		{
+			name: "Preview mode default",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-repo"},
+			ctx:           types.RenderContext{IsPreview: true},
+			expectedTitle: "",
+			expectedBody:  "agystatusline",
+			expectedColor: "white",
+		},
+		{
+			name: "Preview mode with custom symbol",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-repo", Symbol: "📦 "},
+			ctx:           types.RenderContext{IsPreview: true},
+			expectedTitle: "",
+			expectedBody:  "📦 agystatusline",
+			expectedColor: "white",
+		},
+		{
+			name: "Preview mode with custom symbol and Raw=true",
+			gitRunner: func(cmd string, ctx CwdResolver, ttl int) (string, error) {
+				return "", nil
+			},
+			item:          types.WidgetItem{Type: "git-repo", Symbol: "📦 ", Raw: true},
+			ctx:           types.RenderContext{IsPreview: true},
+			expectedTitle: "",
+			expectedBody:  "agystatusline",
+			expectedColor: "white",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			oldRunner := runGitCommand
+			defer func() { runGitCommand = oldRunner }()
+			if tt.gitRunner != nil {
+				runGitCommand = tt.gitRunner
+			}
+
+			title, body, err := w.Render(tt.item, tt.ctx, settings)
+			if err != nil {
+				t.Fatalf("Unexpected render error: %v", err)
+			}
+			if title != tt.expectedTitle {
+				t.Errorf("Expected title %q, got %q", tt.expectedTitle, title)
+			}
+			if body != tt.expectedBody {
+				t.Errorf("Expected body %q, got %q", tt.expectedBody, body)
+			}
+			color := w.GetBodyColor(tt.item, tt.ctx)
+			if color != tt.expectedColor {
+				t.Errorf("Expected color %q, got %q", tt.expectedColor, color)
+			}
+		})
+	}
+}
+
 func TestGitWidgets_CommandTimeoutAndFallback(t *testing.T) {
 	RegisterAll()
 	settings := types.DefaultSettings()
@@ -585,6 +788,15 @@ func TestGitWidgets_CommandTimeoutAndFallback(t *testing.T) {
 	title, body, err = gah.Render(types.WidgetItem{Type: "git-ahead-behind"}, ctx, settings)
 	if err != nil {
 		t.Fatalf("GitAheadBehind render error: %v", err)
+	}
+	if title != "" || body != "(no git)" {
+		t.Errorf("Expected fallback '(no git)', got title %q, body %q", title, body)
+	}
+
+	gr := GetWidget("git-repo")
+	title, body, err = gr.Render(types.WidgetItem{Type: "git-repo"}, ctx, settings)
+	if err != nil {
+		t.Fatalf("GitRepo render error: %v", err)
 	}
 	if title != "" || body != "(no git)" {
 		t.Errorf("Expected fallback '(no git)', got title %q, body %q", title, body)

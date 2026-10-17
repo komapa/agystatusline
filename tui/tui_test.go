@@ -1076,6 +1076,7 @@ func TestTUI_WidgetTypesOrdering(t *testing.T) {
 		"subagents",
 		"tasks",
 		"sandbox",
+		"git-repo",
 		"git-branch",
 		"git-ahead-behind",
 		"git-changes",

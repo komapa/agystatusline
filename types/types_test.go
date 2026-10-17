@@ -417,6 +417,12 @@ func TestWidgetItem_UnmarshalTOML(t *testing.T) {
 			hasErr:   false,
 		},
 		{
+			name:     "git-repo custom glyph shorthand",
+			input:    "git-repo:📦 ",
+			expected: WidgetItem{Type: "git-repo", Symbol: "📦 "},
+			hasErr:   false,
+		},
+		{
 			name:     "generic unknown shorthand with colon",
 			input:    "other-widget:my-param",
 			expected: WidgetItem{Type: "other-widget", Key: "my-param"},
@@ -581,6 +587,11 @@ func TestWidgetItem_MarshalTOML(t *testing.T) {
 			name:     "git-ahead-behind shorthand",
 			widget:   WidgetItem{Type: "git-ahead-behind", Symbol: "⇅ "},
 			expected: "git-ahead-behind:⇅ ",
+		},
+		{
+			name:     "git-repo shorthand",
+			widget:   WidgetItem{Type: "git-repo", Symbol: "📦 "},
+			expected: "git-repo:📦 ",
 		},
 		{
 			name: "custom colored widget marshaled as map",

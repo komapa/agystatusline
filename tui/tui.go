@@ -96,6 +96,7 @@ var widgetTypes = []struct {
 	{name: "Sandbox Enabled", item: types.WidgetItem{Type: "sandbox"}},
 
 	// Git-related
+	{name: "Git Repository", item: types.WidgetItem{Type: "git-repo"}},
 	{name: "Git Branch", item: types.WidgetItem{Type: "git-branch"}},
 	{name: "Git Ahead/Behind", item: types.WidgetItem{Type: "git-ahead-behind"}},
 	{name: "Git Changes", item: types.WidgetItem{Type: "git-changes"}},
