@@ -101,6 +101,21 @@ func TestIntegration_Git_CleanRepo(t *testing.T) {
 		t.Errorf("Expected changes widget to be '(+0,-0)' for clean repo, got %q", plainChanges)
 	}
 
+	repoWidget := widgets.GetWidget("git-repo")
+	if repoWidget == nil {
+		t.Fatalf("git-repo widget not found")
+	}
+	repoItem := types.WidgetItem{Type: "git-repo"}
+	titleR, bodyR, errR := repoWidget.Render(repoItem, ctx, settings)
+	if errR != nil {
+		t.Fatalf("Unexpected error rendering repo widget: %v", errR)
+	}
+	plainRepo := renderer.StripAnsi(titleR + bodyR)
+	expectedRepo := filepath.Base(repoDir)
+	if plainRepo != expectedRepo {
+		t.Errorf("Expected repo widget to be %q, got %q", expectedRepo, plainRepo)
+	}
+
 	gitCachePath := filepath.Join(cacheDir, "git-cache")
 	files, err := os.ReadDir(gitCachePath)
 	if err != nil || len(files) == 0 {
@@ -248,6 +263,13 @@ func TestIntegration_Git_NonGitDirectory(t *testing.T) {
 	plainChanges := renderer.StripAnsi(tChanges + bChanges)
 	if !strings.Contains(plainChanges, "no git") {
 		t.Errorf("Expected changes widget to return '(no git)', got %q", plainChanges)
+	}
+
+	repoWidget := widgets.GetWidget("git-repo")
+	tRepo, bRepo, _ := repoWidget.Render(types.WidgetItem{Type: "git-repo"}, ctx, settings)
+	plainRepo := renderer.StripAnsi(tRepo + bRepo)
+	if !strings.Contains(plainRepo, "no git") {
+		t.Errorf("Expected repo widget to return '(no git)', got %q", plainRepo)
 	}
 }
 

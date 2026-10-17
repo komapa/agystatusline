@@ -63,6 +63,7 @@ var runGitCommand = func(command string, ctx CwdResolver, ttlSeconds int) (strin
 func RegisterAll() {
 	RegisterWidget("model", &ModelWidget{})
 	RegisterWidget("git-branch", &GitBranchWidget{})
+	RegisterWidget("git-repo", &GitRepoWidget{})
 	RegisterWidget("git-changes", &GitChangesWidget{})
 	RegisterWidget("git-ahead-behind", &GitAheadBehindWidget{})
 	RegisterWidget("custom-text", &CustomTextWidget{})

@@ -2,6 +2,7 @@ package widgets
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -191,4 +192,50 @@ func parseAheadBehind(out string) (int, int, error) {
 		return 0, 0, fmt.Errorf("invalid rev-list count: %q", out)
 	}
 	return ahead, behind, nil
+}
+
+// GitRepoWidget displays the current Git repository name.
+type GitRepoWidget struct{}
+
+func (g *GitRepoWidget) GetDefaultColor() string { return "white" }
+func (g *GitRepoWidget) GetDisplayName() string  { return "Git Repository" }
+func (g *GitRepoWidget) GetBodyColor(item types.WidgetItem, ctx types.RenderContext) string {
+	return "white"
+}
+
+func (g *GitRepoWidget) Render(item types.WidgetItem, ctx types.RenderContext, settings types.Settings) (string, string, error) {
+	if ctx.IsPreview {
+		body := "agystatusline"
+		if item.Symbol != "" && !item.Raw {
+			body = item.Symbol + body
+		}
+		return "", body, nil
+	}
+
+	// Check if inside git tree
+	isGit, err := runGitCommand("rev-parse --is-inside-work-tree", ctx, ctx.GitCacheTTLSeconds)
+	if err != nil || strings.TrimSpace(isGit) != "true" {
+		body := "(no git)"
+		if item.Symbol != "" && !item.Raw {
+			body = item.Symbol + body
+		}
+		return "", body, nil
+	}
+
+	topLevel, err := runGitCommand("rev-parse --show-toplevel", ctx, ctx.GitCacheTTLSeconds)
+	if err != nil || strings.TrimSpace(topLevel) == "" {
+		body := "(no git)"
+		if item.Symbol != "" && !item.Raw {
+			body = item.Symbol + body
+		}
+		return "", body, nil
+	}
+
+	repoName := filepath.Base(strings.TrimSpace(topLevel))
+	body := repoName
+	if item.Symbol != "" && !item.Raw {
+		body = item.Symbol + body
+	}
+
+	return "", body, nil
 }
