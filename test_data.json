@@ -1,44 +1,71 @@
 {
-  "hook_event_name": "status",
-  "session_id": "test-session-e2e-12345",
-  "transcript_path": "/tmp/transcript.jsonl",
-  "cwd": "/tmp/test-repo",
+  "cwd": "/home/user/my-project",
+  "session_id": "12345678-abcd-ef01-2345-6789abcdef01",
+  "conversation_id": "12345678-abcd-ef01-2345-6789abcdef01",
+  "transcript_path": "/home/user/.gemini/antigravity/brain/12345678-abcd-ef01-2345-6789abcdef01/.system_generated/logs/transcript.jsonl",
   "model": {
-    "id": "gemini-3.5-flash-medium",
-    "display_name": "Gemini 3.5 Flash (Medium)"
+    "id": "Gemini 3.8 Flash (Medium)",
+    "display_name": "Gemini 3.8 Flash (Medium)",
+    "effort": "medium"
   },
   "workspace": {
-    "current_dir": "/tmp/test-repo",
-    "project_dir": "/tmp/test-repo"
+    "current_dir": "/home/user/my-project",
+    "project_dir": "/home/user/my-project"
   },
-  "version": "1.0.0",
+  "version": "1.4.0",
   "context_window": {
-    "context_window_size": 2000000.0,
-    "total_input_tokens": 14200.0,
-    "total_output_tokens": 850.0,
-    "used_percentage": 20.0,
-    "remaining_percentage": 80.0
+    "total_input_tokens": 24765,
+    "total_output_tokens": 1230,
+    "context_window_size": 1048576,
+    "used_percentage": 2.361774444580078,
+    "remaining_percentage": 97.63822555541992,
+    "current_usage": {
+      "input_tokens": 2218,
+      "output_tokens": 1135,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 15119
+    }
   },
+  "exceeds_200k_tokens": false,
+  "product": "antigravity",
+  "quota": {
+    "3p-5h": {
+      "remaining_fraction": 0.75,
+      "reset_time": "2026-10-17T06:45:00Z",
+      "reset_in_seconds": 15300
+    },
+    "3p-weekly": {
+      "remaining_fraction": 1.0,
+      "reset_time": "2026-10-24T02:30:04Z",
+      "reset_in_seconds": 604724
+    },
+    "gemini-5h": {
+      "remaining_fraction": 0.125,
+      "reset_time": "2026-10-17T03:30:00Z",
+      "reset_in_seconds": 3720
+    },
+    "gemini-argon-wtu-weekly": {
+      "remaining_fraction": 1.0,
+      "reset_time": "2026-10-24T02:30:04Z",
+      "reset_in_seconds": 604724
+    },
+    "gemini-weekly": {
+      "remaining_fraction": 0.428,
+      "reset_time": "2026-10-19T14:15:00Z",
+      "reset_in_seconds": 210000
+    }
+  },
+  "agent_state": "idle",
   "vcs": {
     "type": "git",
     "branch": "feature/e2e-test",
     "dirty": true
   },
-  "quota": {
-    "gemini-5h": {
-      "remaining_fraction": 0.5019,
-      "reset_in_seconds": 8891.0
-    }
-  },
-  "terminal_width": 120,
-  "agent_state": "idle",
-  "artifact_count": 3,
-  "subagents": [
-    "subagent-1",
-    "subagent-2"
-  ],
-  "task_count": 1,
+  "cycle_mode": "auto",
   "sandbox": {
-    "enabled": true
-  }
+    "enabled": false
+  },
+  "plan_tier": "Google AI Pro",
+  "email": "developer@example.com",
+  "terminal_width": 121
 }
