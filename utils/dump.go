@@ -6,35 +6,43 @@ import (
 	"strings"
 )
 
-// ExpandPath expands leading ~ or ~/ to the user's home directory.
-func ExpandPath(path string) string {
+// ExpandPath trims surrounding whitespace and expands leading ~ or ~/ to the user's home directory.
+func ExpandPath(path string) (string, error) {
+	path = strings.TrimSpace(path)
 	if path == "" {
-		return ""
+		return "", nil
 	}
 	if path == "~" {
-		if home, err := os.UserHomeDir(); err == nil {
-			return home
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
 		}
-		return path
+		return home, nil
 	}
 	if strings.HasPrefix(path, "~/") {
-		if home, err := os.UserHomeDir(); err == nil {
-			return filepath.Join(home, path[2:])
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
 		}
+		return filepath.Join(home, path[2:]), nil
 	}
-	return path
+	return path, nil
 }
 
-// DumpPayload atomically writes data to the target path with 0600 file permissions.
-// If path is empty, it returns nil immediately without performing any action.
+// DumpPayload atomically writes data to the target path with 0600 file permissions
+// and creates missing parent directories with 0700 permissions.
+// If path is empty or whitespace-only, it returns nil immediately without performing any action.
 func DumpPayload(path string, data []byte) error {
-	resolvedPath := ExpandPath(path)
+	resolvedPath, err := ExpandPath(path)
+	if err != nil {
+		return err
+	}
 	if resolvedPath == "" {
 		return nil
 	}
 
 	dir := filepath.Dir(resolvedPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0700); err != nil {
 		return err
 	}
 

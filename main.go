@@ -176,11 +176,7 @@ func runMain(args []string, stdin io.Reader, stdout, stderr io.Writer, isTermina
 	}
 
 	if settings.PayloadDump.Enabled {
-		dumpPath := settings.PayloadDump.Path
-		if dumpPath == "" {
-			dumpPath = types.DefaultPayloadDumpPath
-		}
-		_ = utils.DumpPayload(dumpPath, bytes)
+		_ = utils.DumpPayload(settings.PayloadDump.Path, bytes)
 	}
 
 	// Build render context

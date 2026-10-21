@@ -1422,6 +1422,33 @@ lines = [["model"]]
 		}
 	})
 
+	t.Run("ApplyDefaults populates DefaultPayloadDumpPath when Path is whitespace only", func(t *testing.T) {
+		s := Settings{
+			PayloadDump: PayloadDumpConfig{
+				Enabled: true,
+				Path:    "   \t\n  ",
+			},
+		}
+		s.ApplyDefaults()
+		if s.PayloadDump.Path != DefaultPayloadDumpPath {
+			t.Errorf("Expected ApplyDefaults to populate %q for whitespace path, got %q", DefaultPayloadDumpPath, s.PayloadDump.Path)
+		}
+	})
+
+	t.Run("ApplyDefaults trims surrounding whitespace on custom Path", func(t *testing.T) {
+		s := Settings{
+			PayloadDump: PayloadDumpConfig{
+				Enabled: true,
+				Path:    "  /tmp/my_custom_payload.json  ",
+			},
+		}
+		s.ApplyDefaults()
+		expected := "/tmp/my_custom_payload.json"
+		if s.PayloadDump.Path != expected {
+			t.Errorf("Expected ApplyDefaults to trim path to %q, got %q", expected, s.PayloadDump.Path)
+		}
+	})
+
 	t.Run("ApplyDefaults preserves existing custom Path", func(t *testing.T) {
 		customPath := "/tmp/my_custom_payload.json"
 		s := Settings{

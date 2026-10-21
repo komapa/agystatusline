@@ -146,6 +146,16 @@ path = ""
 			expectedPath: "~/.local/share/agystatusline/payload.json",
 		},
 		{
+			name: "toml with whitespace only path populates default path",
+			tomlContent: `
+lines = [["model"]]
+[payload_dump]
+enabled = true
+path = "   "
+`,
+			expectedPath: "~/.local/share/agystatusline/payload.json",
+		},
+		{
 			name: "toml with explicit custom path preserves custom path",
 			tomlContent: `
 lines = [["model"]]

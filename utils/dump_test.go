@@ -16,9 +16,11 @@ func TestExpandPath(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		input    string
-		expected string
+		name      string
+		homeEnv   *string
+		input     string
+		expected  string
+		expectErr bool
 	}{
 		{
 			name:     "empty string remains empty",
@@ -26,9 +28,19 @@ func TestExpandPath(t *testing.T) {
 			expected: "",
 		},
 		{
+			name:     "whitespace only string becomes empty",
+			input:    "   \t\n  ",
+			expected: "",
+		},
+		{
 			name:     "absolute path remains unchanged",
 			input:    "/var/log/status.json",
 			expected: "/var/log/status.json",
+		},
+		{
+			name:     "surrounding whitespace on path is trimmed",
+			input:    "  ~/.local/share/agystatusline/payload.json  ",
+			expected: filepath.Join(home, ".local", "share", "agystatusline", "payload.json"),
 		},
 		{
 			name:     "tilde slash expands to home dir",
@@ -45,11 +57,35 @@ func TestExpandPath(t *testing.T) {
 			input:    "data/payload.json",
 			expected: "data/payload.json",
 		},
+		{
+			name:      "tilde only returns error when HOME is unset",
+			homeEnv:   func() *string { s := ""; return &s }(),
+			input:     "~",
+			expectErr: true,
+		},
+		{
+			name:      "tilde slash returns error when HOME is unset",
+			homeEnv:   func() *string { s := ""; return &s }(),
+			input:     "~/.local/share/agystatusline/payload.json",
+			expectErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ExpandPath(tt.input)
+			if tt.homeEnv != nil {
+				t.Setenv("HOME", *tt.homeEnv)
+			}
+			got, err := ExpandPath(tt.input)
+			if tt.expectErr {
+				if err == nil {
+					t.Fatalf("ExpandPath(%q) expected error, got nil (result: %q)", tt.input, got)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("ExpandPath(%q) unexpected error: %v", tt.input, err)
+			}
 			if got != tt.expected {
 				t.Errorf("ExpandPath(%q) = %q, want %q", tt.input, got, tt.expected)
 			}
@@ -65,14 +101,53 @@ func TestDumpPayload(t *testing.T) {
 		}
 	})
 
-	t.Run("successful verbatim write with 0600 mode and parent dir creation", func(t *testing.T) {
+	t.Run("whitespace only path does nothing and returns nil", func(t *testing.T) {
+		err := DumpPayload("   \t\n  ", []byte(`{"status":"ok"}`))
+		if err != nil {
+			t.Errorf("Expected nil error for whitespace path, got %v", err)
+		}
+	})
+
+	t.Run("returns error and does not create literal tilde directory when HOME is unset", func(t *testing.T) {
 		tempDir := t.TempDir()
-		targetPath := filepath.Join(tempDir, "nested", "sub", "payload.json")
+		origWd, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("Failed to get wd: %v", err)
+		}
+		if err := os.Chdir(tempDir); err != nil {
+			t.Fatalf("Failed to chdir: %v", err)
+		}
+		t.Cleanup(func() {
+			_ = os.Chdir(origWd)
+		})
+		t.Setenv("HOME", "")
+
+		err = DumpPayload("~/.local/share/agystatusline/payload.json", []byte(`{"status":"ok"}`))
+		if err == nil {
+			t.Errorf("Expected error when HOME is unset for tilde path, got nil")
+		}
+		if _, statErr := os.Stat(filepath.Join(tempDir, "~")); !os.IsNotExist(statErr) {
+			t.Errorf("Expected literal '~' directory not to be created in CWD, but stat returned: %v", statErr)
+		}
+	})
+
+	t.Run("successful verbatim write with 0600 file mode and 0700 parent dir creation", func(t *testing.T) {
+		tempDir := t.TempDir()
+		parentDir := filepath.Join(tempDir, "nested", "sub")
+		targetPath := filepath.Join(parentDir, "payload.json")
 		payload := []byte(`{"version":"1.0.0","quota":{"gemini-5h":{"remaining_fraction":0.85}}}`)
 
 		err := DumpPayload(targetPath, payload)
 		if err != nil {
 			t.Fatalf("DumpPayload failed: %v", err)
+		}
+
+		dirInfo, err := os.Stat(parentDir)
+		if err != nil {
+			t.Fatalf("Failed to stat parent dir: %v", err)
+		}
+		if dirPerm := dirInfo.Mode().Perm(); dirPerm != 0700 {
+			t.Errorf("Expected parent directory mode 0700, got %o", dirPerm)
 		}
 
 		info, err := os.Stat(targetPath)

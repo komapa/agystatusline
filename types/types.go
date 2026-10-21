@@ -309,8 +309,11 @@ type Settings struct {
 
 // ApplyDefaults ensures missing or empty configuration fields are populated with standard defaults.
 func (s *Settings) ApplyDefaults() {
-	if s.PayloadDump.Path == "" {
+	trimmed := strings.TrimSpace(s.PayloadDump.Path)
+	if trimmed == "" {
 		s.PayloadDump.Path = DefaultPayloadDumpPath
+	} else {
+		s.PayloadDump.Path = trimmed
 	}
 }
 
